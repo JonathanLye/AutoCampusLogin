@@ -1,0 +1,10 @@
+# 构建产物
+bin/
+obj/
+artifacts/
+dist/
+*.user
+.vs/
+
+# 抓包文件里可能有明文密码，绝不提交
+*.har

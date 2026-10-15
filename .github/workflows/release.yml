@@ -1,0 +1,73 @@
+name: Release
+
+# 推送 v1.2.3 这样的 tag 时：测试 → 构建 → 生成 SHA256 和构建来源证明 → 创建 GitHub Release
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write         # 创建 Release
+  id-token: write         # 构建来源证明（Sigstore）
+  attestations: write
+  artifact-metadata: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Version from tag
+        id: ver
+        shell: pwsh
+        run: |
+          $v = "${{ github.ref_name }}".TrimStart('v')
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "tag 必须是 vX.Y.Z 格式，当前：${{ github.ref_name }}" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Test
+        run: dotnet test tests/CampusLogin.Tests/CampusLogin.Tests.csproj -c Release
+
+      - name: Build
+        run: >
+          dotnet build src/CampusLogin/CampusLogin.csproj -c Release
+          -p:ContinuousIntegrationBuild=true
+          -p:Version=${{ steps.ver.outputs.version }}
+
+      - name: Stage artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item src/CampusLogin/bin/Release/net48/CampusLogin.exe dist/
+          $h = (Get-FileHash dist/CampusLogin.exe -Algorithm SHA256).Hash.ToLower()
+          "$h  CampusLogin.exe" | Out-File -Encoding ascii dist/SHA256SUMS.txt
+          Get-Content dist/SHA256SUMS.txt
+
+      # 预留：代码签名（SignPath Foundation 审核通过后在这里加签名步骤，签名必须在生成哈希和证明之前）
+
+      - uses: actions/attest@v4
+        with:
+          subject-path: dist/CampusLogin.exe
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $hash = (Get-Content dist/SHA256SUMS.txt).Split(' ')[0]
+          $notes = @"
+          ## 下载
+
+          下载 ``CampusLogin.exe``，放到一个固定的文件夹后双击运行。使用说明见 [README](https://github.com/${{ github.repository }}#readme)。
+
+          首次运行如果出现"Windows 已保护你的电脑"，点「更多信息」→「仍要运行」（程序暂无代码签名）。
+
+          ## 校验
+
+          SHA256：``$hash``
+
+          ``````
+          gh attestation verify CampusLogin.exe --repo ${{ github.repository }}
+          ``````
+          "@
+          gh release create "${{ github.ref_name }}" dist/CampusLogin.exe dist/SHA256SUMS.txt --title "${{ github.ref_name }}" --notes $notes

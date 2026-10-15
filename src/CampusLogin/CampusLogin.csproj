@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>CampusLogin</RootNamespace>
+    <AssemblyName>CampusLogin</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+
+    <Version>1.0.0</Version>
+    <Product>校园网自动登录</Product>
+    <AssemblyTitle>韶关学院校园网自动登录</AssemblyTitle>
+    <Description>开机自动完成韶关学院校园网（2.2.2.2）认证的托盘小工具，开源免费。</Description>
+    <Company>AutoCampusLogin 开源项目</Company>
+    <Copyright>MIT License</Copyright>
+
+    <!-- 单文件：只用框架自带程序集，不生成 exe.config 依赖，不混淆、不压缩 -->
+    <Deterministic>true</Deterministic>
+    <DebugType>embedded</DebugType>
+    <GenerateBindingRedirectsOutputType>false</GenerateBindingRedirectsOutputType>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+    <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="app.ico" LogicalName="CampusLogin.app.ico" />
+    <InternalsVisibleTo Include="CampusLogin.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Test
+        run: dotnet test tests/CampusLogin.Tests/CampusLogin.Tests.csproj -c Release
+
+      - name: Build
+        run: dotnet build src/CampusLogin/CampusLogin.csproj -c Release -p:ContinuousIntegrationBuild=true
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: CampusLogin-${{ github.sha }}
+          path: src/CampusLogin/bin/Release/net48/CampusLogin.exe
